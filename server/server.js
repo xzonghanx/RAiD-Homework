@@ -67,7 +67,55 @@ app.delete('/products', async (req, res) => {
     res.json(product);
 })
 
+//create sales record
+app.post('/purchases', async (req,res) => {
+    try{
+        const purchase = await Purchase.create(req.body);
+        res.json(purchase)
+        }
+  
+    catch (error) {
+        console.log(error.message);
+        res.json({message: error.message})
+    }
+})
 
+//fetch sales data from MongoDB database
+app.get('/purchases', async (req, res) => {
+    try {
+        const purchase = await Purchase.find(); //pretty() function doesnt work?
+        res.json(purchase);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.json({message: error.message})
+    }
+})
+
+//update available qty on purchase (stock)
+app.patch('/products/:name', async (req, res) => {
+    try {
+        const productName = req.params.name;
+        const reduction = req.body;
+        const product = await Product.findOne({"name" : productName});
+        //console.log(product);
+        product.quantity -= reduction.quantity;
+        //console.log(product.quantity);
+        //console.log(reduction.quantity);
+        await product.save();
+        res.json(product);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.json({message: error.message})
+    }
+})
+
+//app.delete('/purchases')
+app.delete('/purchases', async (req, res) => {
+    const purchase = await Purchase.deleteMany();
+    res.json(purchase);
+})
 
 //Connect to Mongo DB. connection name: zong
 mongoose.connect(process.env.DB_URI)
