@@ -34,6 +34,41 @@ app.get('/products', async (req, res) => {
     }
 })
 
+//if got time, figure out find like/contains/tolower etc to make search function more robust.
+app.get('/products/:name', async (req, res) => {
+    try {
+        const productName = req.params.name;
+        const product = await Product.find({"name" : productName});
+        return res.json(product);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.json({message: error.message})
+    }
+})
+
+//find by name and update, using put request
+app.put('/products/:name', async (req, res) => {
+    try {
+        const productName = req.params.name;
+        const product = await Product.findOneAndUpdate({"name" : productName}, req.body);      
+        await product.save();
+        return res.json(product);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.json({message: error.message})
+    }
+})
+
+//delete and clear database.
+app.delete('/products', async (req, res) => {
+    const product = await Product.deleteMany();
+    res.json(product);
+})
+
+
+
 //Connect to Mongo DB. connection name: zong
 mongoose.connect(process.env.DB_URI)
 .then(() => {
