@@ -61,7 +61,7 @@ app.put('/products/:name', async (req, res) => {
     }
 })
 
-//delete and clear database.
+//delete products database.
 app.delete('/products', async (req, res) => {
     const product = await Product.deleteMany();
     res.json(product);
@@ -92,16 +92,13 @@ app.get('/purchases', async (req, res) => {
     }
 })
 
-//update available qty on purchase (stock)
+//reduce available qty on purchase (stock)
 app.patch('/products/:name', async (req, res) => {
     try {
         const productName = req.params.name;
         const reduction = req.body;
         const product = await Product.findOne({"name" : productName});
-        //console.log(product);
         product.quantity -= reduction.quantity;
-        //console.log(product.quantity);
-        //console.log(reduction.quantity);
         await product.save();
         res.json(product);
     }
@@ -111,7 +108,7 @@ app.patch('/products/:name', async (req, res) => {
     }
 })
 
-//app.delete('/purchases')
+//delete purchases records
 app.delete('/purchases', async (req, res) => {
     const purchase = await Purchase.deleteMany();
     res.json(purchase);
