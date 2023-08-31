@@ -72,8 +72,145 @@ function App() {
     }
   }
 
-  //add to cart and check out/////////////////////////////////////////////////////////////
-  
+  //for adding products to cart via click of listed products
+  const [cart, setCart] = useState([]);
+  //pass the clicked 'product' as a function, then add the product into a cart state.
+  const addProductToCart = async(products) => {
+    console.log(products);
+    //check if added product exists in cart before adding
+    //look thru the cart, for i (or any const) in cart, return true if that ProductInCart.id matches. 
+    let findProductInCart = await cart.find(i => {
+      return i._id === products._id
+    });
+
+    if (findProductInCart){
+      let newCart = [];
+      let newItem; 
+      
+      cart.forEach(cartItem => {
+        if(cartItem._id === products._id){
+          newItem = {
+            ...cartItem,
+            quantity: cartItem.quantity + 1,
+            totalAmount: cartItem.price * (cartItem.quantity +1)
+          }
+          newCart.push(newItem);
+        }else{
+          newCart.push(cartItem);
+        }
+      });
+      setCart(newCart);
+
+    }else{ //add product to the cart
+      let addingProduct = {
+        ...products, //... spread operator copies the existing string, i.e. the product, then allows concatenation of additional information
+        'quantity': 1,
+        'totalAmount': products.price,
+      }
+      setCart([...cart, addingProduct]); //set cart state to previous cart + new addedproducts
+    }
+  }
+
+  //for removing product from cart
+  const removeProduct = async (products) => {
+    //using filter, get cart items that are NOT the selected product id, set as newcart.
+    const newCart = cart.filter(cartItem => cartItem._id !== products._id)
+    setCart(newCart);
+  }
+
+  //for getting total amount
+  //useEffect to calculate total everytime cart changes
+  const [cartTotalAmount, setCartTotalAmount] = useState(0);
+  useEffect(() => {
+    let newCartTotalAmount = 0;
+    //for each item in cart, add the total amount to the final cart amount.
+    //used parseFloat instead of parseInt to allow decimal pts.
+    cart.forEach(icart => {
+      newCartTotalAmount = newCartTotalAmount + parseFloat(icart.totalAmount);
+    }) 
+    setCartTotalAmount(newCartTotalAmount);
+  }, [cart])
+
+  //for adding to cart by manually keying name and qty. re-use codes from above for add to cart
+  const [addProductName, setAddProductName] = useState('');
+  const [addQuantity, setAddQuantity] = useState(0);
+  const [addProduct, setAddProduct] = useState([]);
+  const handleAddToCart = async () => { 
+        
+    let findProductInCart = await cart.find(i => {
+      return i.name === addProductName
+    });
+
+    if (findProductInCart){
+      let newCart = [];
+      let newItem;
+
+      cart.forEach(cartItem => {
+        if(cartItem.name === addProductName){
+          newItem = {
+            ...cartItem,
+            quantity: cartItem.quantity + addQuantity,
+            totalAmount: cartItem.price * (cartItem.quantity + addQuantity)
+          }
+          newCart.push(newItem);
+        }else{
+          newCart.push(cartItem);
+        }
+      });
+      setCart(newCart);
+      }
+      else{
+        //find product in original db using existing findAndUpdate function    
+        try {
+          const response = await axios.get(`/products/${addProductName}`);
+          console.log (response.data);  
+          
+          setAddProduct(response.data[0]); //to only get the 1st element in the response array, i.e. product data as an object     
+          //console.log(addProduct); 
+                
+        } catch (error) {
+          console.log('error finding product')
+        }
+        //state updates doesnt happen immediately in async functions. does not work on first click.
+        //console.log(addProduct); 
+        let addingProduct = {
+          ...addProduct,    
+          'quantity': addQuantity,
+          'totalAmount': addProduct.price,
+        }
+        
+        //console.log (addingProduct);
+        
+        setCart([...cart, addingProduct]);
+        
+        //reset fields after submit
+        //setAddProductName('');
+        //setAddQuantity(0);
+        //setAddProduct([]);
+      }
+      }
+
+  //handle checkout: record purchase and reduction in qty for the product stock.
+  const checkout = async () => {
+    try { 
+      for await(const cartItem of cart) {
+        axios.post('/purchases', { name: cartItem.name, quantity: cartItem.quantity, price: cartItem.price, totalPrice: cartTotalAmount })
+        axios.patch(`/products/${cartItem.name}`, {quantity: cartItem.quantity});
+        window.location.reload();   
+      }
+
+      //cannot use forEach with await functions because promises not fufilled.
+      //cart.forEach (cartItem => {console.log(cartItem)}       
+ 
+      //records are created above, but how to merge cart sales as 1 record.      
+      //await axios.post('/purchases', {cart});
+      //console.log (cart);
+      //console.log ({cartTotalAmount});
+         
+    } catch (error) {
+      console.error('error checking out')
+    }
+  }
 
 //to delete and clear databases
   const deleteProducts = async () => {
@@ -83,6 +220,15 @@ function App() {
       window.location.reload();
     } catch (error) {
       console.error('error deleting products')
+    }
+  }
+  const deletePurchases = async () => {
+    try {
+      const response = await axios.delete('/purchases');
+      console.log(response.data);
+      window.location.reload();
+    } catch (error) {
+      console.error('error deleting purchases')
     }
   }
 
@@ -149,15 +295,81 @@ return (
 
 <br></br>
 
-{/*add to cart and check out functions*/}
+<div>
+  <h2>Available products and quantity</h2>
+  <h3>Click to add to cart</h3>
+  <div className="wrapper"> {/*added definition for grid in app.css*/}
+    {products.map((products,index) => {
+      return (
+      <div className="item" key={index}> 
+      <div className="border" onClick={() => addProductToCart(products)}> {/*acts as button for the item*/}
+      <h4>{products.name}</h4>
+      <div>Quantity:{products.quantity}</div>
+      <div>Price:${products.price}</div>          
+      </div></div>
+      )
+      })
+    }
+</div></div>
 
+<div className="table"> {/*need to resolve table formatting, edit in app.css*/}
+  <table>
+    <thead>
+      <tr>
+        <td>Name</td>
+        <td>Quantity</td>
+        <td>Price</td>
+        <td>TotalAmount</td>
+        <td>Action</td>
+      </tr>
+    </thead>   
+    <tbody>
+      {cart.map((cartProduct, key) => <tr key={key}>
+          <td>{cartProduct.name}</td>
+          <td>{cartProduct.quantity}</td>
+          <td>{cartProduct.price}</td>
+          <td>{cartProduct.totalAmount}</td>
+          <td><button onClick={() => removeProduct(cartProduct)}>Remove</button></td>
+          </tr>)}  
+    </tbody>
+  <h4>Cart Total Amount: ${cartTotalAmount}</h4>
+  <div>
+    { cartTotalAmount 
+      !== 0 ? <div>
+        <button onClick={checkout}>Check Out</button></div>
+      : <div>Please add items to cart first</div>
+      }
+  </div> 
+  </table>  
+</div>
 
+<br></br>
+
+{/*To use add to cart by name and qty*/}
+<div>
+  <h2>Manual Purchasing by Name & Qty</h2>
+  <label>
+    Product Name:
+    <input type = "text" value = {addProductName} onChange = {(e) => setAddProductName(e.target.value)}/>
+  </label>
+</div>
+<div>
+  <label>
+    Quantity:
+    <input type = "number" value = {addQuantity} onChange = {(e) => setAddQuantity(parseInt(e.target.value))}/>
+  </label>
+</div>
+<div>
+  <button onClick={handleAddToCart}>Add to Cart</button> {/*need to format this to function*/}
+</div>
+
+<br></br>
 
 {/*to delete and clear databases*/}
 <div>
 <h2>Deleting database records</h2>
 <button onClick={deleteProducts}>Delete Products</button>
-
+<button onClick={deletePurchases}>Delete Purchases</button>
 </div>
 
 <br></br>
