@@ -1,11 +1,11 @@
 import React, {useState, useEffect} from 'react';
-import axios from 'axios'; //Alternative method to 'fetch'
+import axios from 'axios'; 
 import './App.css';
 //Using Proxy, dont need to include http://localhost:8000/
 
 function App() {
 
-  //for adding into DB --> can consider putting on different page
+  //for adding products into DB
   const [newProductName, setNewProductName] = useState('');
   const [newProductQuantity, setNewProductQuantity] = useState(0);
   const [newProductPrice, setNewProductPrice] = useState(0);
@@ -22,8 +22,7 @@ function App() {
     }
   }
 
-  //for listing down all records
-  //get data from server at route /products after it is updated.
+  //for listing down all records. get data from server at route /products after it is updated.
   const [products, setProducts] = useState([]);
   const getProducts = async () => {
     try {
@@ -72,7 +71,7 @@ function App() {
     }
   }
 
-  //for adding products to cart via click of listed products
+  //for adding products to cart by clicking listed products
   const [cart, setCart] = useState([]);
   //pass the clicked 'product' as a function, then add the product into a cart state.
   const addProductToCart = async(products) => {
@@ -101,7 +100,7 @@ function App() {
       });
       setCart(newCart);
 
-    }else{ //add product to the cart
+    }else{ //add new product to the cart
       let addingProduct = {
         ...products, //... spread operator copies the existing string, i.e. the product, then allows concatenation of additional information
         'quantity': 1,
@@ -118,8 +117,7 @@ function App() {
     setCart(newCart);
   }
 
-  //for getting total amount
-  //useEffect to calculate total everytime cart changes
+  //useEffect to calculate totalamount everytime cart changes
   const [cartTotalAmount, setCartTotalAmount] = useState(0);
   useEffect(() => {
     let newCartTotalAmount = 0;
@@ -131,7 +129,7 @@ function App() {
     setCartTotalAmount(newCartTotalAmount);
   }, [cart])
 
-  //for adding to cart by manually keying name and qty. re-use codes from above for add to cart
+  //for adding to cart by manually keying name and qty. adapted codes from above for add to cart
   const [addProductName, setAddProductName] = useState('');
   const [addQuantity, setAddQuantity] = useState(0);
   const [addProduct, setAddProduct] = useState([]);
@@ -164,22 +162,16 @@ function App() {
         try {
           const response = await axios.get(`/products/${addProductName}`);
           console.log (response.data);  
-          
-          setAddProduct(response.data[0]); //to only get the 1st element in the response array, i.e. product data as an object     
-          //console.log(addProduct); 
-                
+          setAddProduct(response.data[0]); //to only get the 1st element in the response array, i.e. product data as an object   
         } catch (error) {
           console.log('error finding product')
         }
         //state updates doesnt happen immediately in async functions. does not work on first click.
-        //console.log(addProduct); 
         let addingProduct = {
           ...addProduct,    
           'quantity': addQuantity,
           'totalAmount': addProduct.price,
         }
-        
-        //console.log (addingProduct);
         
         setCart([...cart, addingProduct]);
         
@@ -203,9 +195,6 @@ function App() {
       //cart.forEach (cartItem => {console.log(cartItem)}       
  
       //records are created above, but how to merge cart sales as 1 record.      
-      //await axios.post('/purchases', {cart});
-      //console.log (cart);
-      //console.log ({cartTotalAmount});
          
     } catch (error) {
       console.error('error checking out')
@@ -232,7 +221,6 @@ function App() {
     }
   }
 
-    
 return (
 
 <div className="App">
@@ -312,7 +300,7 @@ return (
     }
 </div></div>
 
-<div className="table"> {/*need to resolve table formatting, edit in app.css*/}
+<div className="table">
   <table>
     <thead>
       <tr>
@@ -345,7 +333,6 @@ return (
 
 <br></br>
 
-{/*To use add to cart by name and qty*/}
 <div>
   <h2>Manual Purchasing by Name & Qty</h2>
   <label>
@@ -360,12 +347,11 @@ return (
   </label>
 </div>
 <div>
-  <button onClick={handleAddToCart}>Add to Cart</button> {/*need to format this to function*/}
+  <button onClick={handleAddToCart}>Add to Cart</button> 
 </div>
 
 <br></br>
 
-{/*to delete and clear databases*/}
 <div>
 <h2>Deleting database records</h2>
 <button onClick={deleteProducts}>Delete Products</button>

@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config() //for separate .env file to store password etc before sharing online.
 
 const express = require('express');
 const cors = require('cors');
@@ -7,7 +7,7 @@ const Product = require('./models/productModel'); //created model & schema in pr
 const Purchase = require('./models/purchaseModel'); //to handle sales record
 const app = express();
 
-app.use(cors()); //enable cross-origin resource sharing and parse incoming request, do i need this?
+app.use(cors()); //enable cross-origin resource sharing and parse incoming request
 app.use(express.json()); //enable use of express and middleware
 
 //create data via client and store into MongoDB
@@ -83,7 +83,7 @@ app.post('/purchases', async (req,res) => {
 //fetch sales data from MongoDB database
 app.get('/purchases', async (req, res) => {
     try {
-        const purchase = await Purchase.find(); //pretty() function doesnt work?
+        const purchase = await Purchase.find();
         res.json(purchase);
     }
     catch (error) {
